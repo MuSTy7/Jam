@@ -291,6 +291,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -3884406814514726077, guid: a980aba6a245ada4d8ed9e0ab99803db, type: 3}
+      propertyPath: m_TagString
+      value: Danger
+      objectReference: {fileID: 0}
     - target: {fileID: -1253996098385199550, guid: a980aba6a245ada4d8ed9e0ab99803db, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.2
@@ -303,9 +307,17 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: -10.36
       objectReference: {fileID: 0}
+    - target: {fileID: -296027653261494606, guid: a980aba6a245ada4d8ed9e0ab99803db, type: 3}
+      propertyPath: m_TagString
+      value: Danger
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a980aba6a245ada4d8ed9e0ab99803db, type: 3}
       propertyPath: m_Name
       value: balta
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a980aba6a245ada4d8ed9e0ab99803db, type: 3}
+      propertyPath: m_TagString
+      value: Danger
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -331,8 +343,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a980aba6a245ada4d8ed9e0ab99803db, type: 3}
   m_PrefabInstance: {fileID: 92042220}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &176345040
-BoxCollider:
+--- !u!64 &176345040
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -349,9 +361,10 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &294549121
 GameObject:
   m_ObjectHideFlags: 0
@@ -1524,7 +1537,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &1380457777
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1840,7 +1853,6 @@ MonoBehaviour:
   particleAlpha: 0.4
   maxScanCount: 5
   raysPerFrame: 20
-  spreadAngle: 0.2
 --- !u!1 &1895348565
 GameObject:
   m_ObjectHideFlags: 0
