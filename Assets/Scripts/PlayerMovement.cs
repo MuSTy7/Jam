@@ -1,10 +1,16 @@
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Fiziksel Boyut Ayarlarý")]
+    public float targetHeight = 3.5f;
+    public float targetRadius = 0.3f;
+
     [Header("Hareket Ayarlarý")]
-    public float speed = 3.5f; // Hýzý biraz düþürdük, gerilim için daha iyi
-    public float gravity = -15f; // Yere düþme hýzýmýz (Yerçekimi)
+    public float speed = 6f; // Hýzý biraz artýrdým ki boþluklardan daha rahat atla
+    public float jumpHeight = 2.5f; // Zýplama yüksekliði
+    public float gravity = -25f; // Daha tok bir düþüþ için yerçekimini artýrdým
 
     [Header("Kamera Ayarlarý")]
     public Transform playerCamera;
@@ -12,30 +18,76 @@ public class PlayerMovement : MonoBehaviour
     private float xRotation = 0f;
 
     [Header("Yürüme Hissi (Head Bob)")]
-    public float bobSpeed = 12f; // Adým atma hýzý (Kafanýn sallanma ritmi)
-    public float bobAmount = 0.05f; // Kafanýn ne kadar þiddetli sallanacaðý
+    public float bobSpeed = 12f;
+    public float bobAmount = 0.06f;
     private float defaultCameraY = 0f;
     private float timer = 0f;
 
     private CharacterController controller;
-    private Vector3 velocity; // Karakterin düþüþ hýzý
-    private bool isGrounded; // Yerde miyiz?
+    private Vector3 velocity;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
 
-        // Baþlangýçta kameranýn boyunu hafýzaya alalým ki hep o hizaya dönebilsin
+        SetupCharacterDimensions();
+
         if (playerCamera != null)
         {
+            float eyeLine = targetHeight * 0.45f;
+            playerCamera.localPosition = new Vector3(0, eyeLine, 0);
             defaultCameraY = playerCamera.localPosition.y;
+        }
+    }
+
+    void SetupCharacterDimensions()
+    {
+        controller.height = targetHeight;
+        controller.radius = targetRadius;
+        controller.center = new Vector3(0, targetHeight / 2f, 0);
+
+        Transform body = transform.Find("Body");
+        if (body != null)
+        {
+            body.localScale = new Vector3(targetRadius * 2, targetHeight / 2f, targetRadius * 2);
         }
     }
 
     void Update()
     {
-        // --- 1. KAMERA DÖNÜÞÜ ---
+        if (controller == null || !controller.enabled) return;
+
+        // 1. MOUSE BAKIÞI
+        HandleRotation();
+
+        // 2. YERÇEKÝMÝ VE ZEMÝN KONTROLÜ
+        if (controller.isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f;
+        }
+
+        // 3. YATAY HAREKET (WASD)
+        HandleMovement();
+
+        // 4. ZIPLAMA (BOÞLUK TUÞU)
+        // Eðer yerdeyse ve Space tuþuna basýldýysa zýpla
+        if (Input.GetButtonDown("Jump") && controller.isGrounded)
+        {
+            // Fizik formülü: v = sqrt(h * -2 * g)
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+
+        // 5. YERÇEKÝMÝNÝ UYGULA
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+
+        // 6. YÜRÜME EFEKTÝ
+        ApplyHeadBob();
+    }
+
+    void HandleRotation()
+    {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
@@ -44,50 +96,40 @@ public class PlayerMovement : MonoBehaviour
 
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX);
+    }
 
-        // --- 2. YERÇEKÝMÝ KONTROLÜ (Uçmayý ve Havada Kalmayý Engeller) ---
-        // CharacterController'ýn alt kýsmý yere deðiyor mu?
-        isGrounded = controller.isGrounded;
-
-        if (isGrounded && velocity.y < 0)
-        {
-            velocity.y = -2f; // Yerdeyken sürekli hafifçe yere bastýr ki merdivenlerden falan düzgün inebilsin
-        }
-
-        // --- 3. OYUNCU HAREKETÝ ---
+    void HandleMovement()
+    {
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
         Vector3 move = transform.right * x + transform.forward * z;
 
-        // Önce saða/sola/ileriye hareket ettir
+        if (move.magnitude > 1) move.Normalize();
+
         controller.Move(move * speed * Time.deltaTime);
+    }
 
-        // Sonra yerçekimini hesapla ve aþaðý doðru çek
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+    void ApplyHeadBob()
+    {
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
 
-        // --- 4. YÜRÜME HÝSSÝ (HEAD BOB) ---
-        // Eðer oyuncu herhangi bir tuþa basýyorsa (hareket ediyorsa)
-        if (Mathf.Abs(x) > 0.1f || Mathf.Abs(z) > 0.1f)
+        if (controller.isGrounded && (Mathf.Abs(x) > 0.1f || Mathf.Abs(z) > 0.1f))
         {
-            if (isGrounded) // Sadece yerdeyken kafa sallansýn
-            {
-                timer += Time.deltaTime * bobSpeed;
-                playerCamera.localPosition = new Vector3(
-                    playerCamera.localPosition.x,
-                    defaultCameraY + Mathf.Sin(timer) * bobAmount,
-                    playerCamera.localPosition.z
-                );
-            }
+            timer += Time.deltaTime * bobSpeed;
+            playerCamera.localPosition = new Vector3(
+                playerCamera.localPosition.x,
+                defaultCameraY + Mathf.Sin(timer) * bobAmount,
+                playerCamera.localPosition.z
+            );
         }
         else
         {
-            // Oyuncu durduysa, kamerayý yumuþak bir þekilde eski yüksekliðine geri getir
             timer = 0;
             playerCamera.localPosition = new Vector3(
                 playerCamera.localPosition.x,
-                Mathf.Lerp(playerCamera.localPosition.y, defaultCameraY, Time.deltaTime * bobSpeed),
+                Mathf.Lerp(playerCamera.localPosition.y, defaultCameraY, Time.deltaTime * 5f),
                 playerCamera.localPosition.z
             );
         }
