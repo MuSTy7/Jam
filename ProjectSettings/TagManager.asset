@@ -10,6 +10,7 @@ TagManager:
   - Rune2 Tag
   - Rune3 Tag
   - Rune4 Tag
+  - Tas
   layers:
   - Default
   - TransparentFX
