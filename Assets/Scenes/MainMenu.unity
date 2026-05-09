@@ -1066,36 +1066,14 @@ GameObject:
   - component: {fileID: 581173644}
   - component: {fileID: 581173643}
   - component: {fileID: 581173642}
-  - component: {fileID: 581173641}
+  - component: {fileID: 581173645}
   m_Layer: 0
   m_Name: Plane
-  m_TagString: Untagged
+  m_TagString: RunePath
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!64 &581173641
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 581173640}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!23 &581173642
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1168,6 +1146,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &581173645
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 581173640}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10.22, y: 0.64, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1011085864
 GameObject:
   m_ObjectHideFlags: 0
@@ -1974,8 +1973,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 676.6175, y: 1000, z: 263.17453}
-  m_Center: {x: -33.711792, y: 0, z: -81.586815}
+  m_Size: {x: 676.6175, y: 1000, z: 44.088364}
+  m_Center: {x: -33.71179, y: 0, z: 27.956482}
 --- !u!114 &1678032354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2148,8 +2147,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 781.01654, y: 1000, z: 230.7472}
-  m_Center: {x: 7.9874597, y: 0, z: -65.37316}
+  m_Size: {x: 781.01654, y: 1000, z: 69.696526}
+  m_Center: {x: 7.9874597, y: 0, z: 15.152194}
 --- !u!114 &1812668082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2320,6 +2319,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuExplorer
   moveSpeed: 1
   lookSensitivity: 1
+  fixedYHeight: 1.5
   pointCloudPrefab: {fileID: 1220459979228115909, guid: c85871edbdd0ddc448099160509cc8c6, type: 3}
   scanRange: 15
   raysPerScan: 100

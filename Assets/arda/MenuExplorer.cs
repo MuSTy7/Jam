@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class MenuExplorer : MonoBehaviour
 {
     [Header("Hareket Ayarları")]
-    public float moveSpeed = 2f;
+    public float moveSpeed = 3f;
     public float lookSensitivity = 2f;
+    public float fixedYHeight = 1.5f;
 
-    [Header("Otomatik Tarama (Mouse Odaklı)")]
+    [Header("Tarama Ayarları")]
     public ParticleSystem pointCloudPrefab;
     public float scanRange = 15f;
-    public int raysPerScan = 100;
+    public int raysPerScan = 120;
     public float scanInterval = 0.05f;
 
     [Header("Görsel Detaylar")]
@@ -18,28 +20,41 @@ public class MenuExplorer : MonoBehaviour
     [Range(0f, 1f)]
     public float particleAlpha = 0.5f;
 
-    // ── İç durum ────────────────────────────────────────────────────────
     private float rotationX = 0f;
     private float rotationY = 0f;
     private ParticleSystem currentScan;
     private float nextScanTime;
-    private Camera cam;
 
     void Start()
     {
-        cam = Camera.main;
+        // Yüksekliği sabitle
+        transform.position = new Vector3(transform.position.x, fixedYHeight, transform.position.z);
 
+        // MOUSE KİLİTLEME: Fareyi ekranın ortasına gizle ve kilitle
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
         if (pointCloudPrefab != null)
+        {
             currentScan = Instantiate(pointCloudPrefab, Vector3.zero, Quaternion.identity);
+        }
+
+        Vector3 rot = transform.localRotation.eulerAngles;
+        rotationY = rot.y;
+        rotationX = rot.x;
     }
 
     void Update()
     {
-        HandleRotation();
+        // ESC tuşuna basınca fareyi serbest bırak (Editörde kolaylık sağlar)
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
         HandleMovement();
+        HandleRotation();
 
         if (Time.time >= nextScanTime)
         {
@@ -48,70 +63,76 @@ public class MenuExplorer : MonoBehaviour
         }
     }
 
-    // ── Rotasyon — her zaman aktif ───────────────────────────────────────
-    void HandleRotation()
-    {
-        rotationY += Input.GetAxis("Mouse X") * lookSensitivity;
-        rotationX -= Input.GetAxis("Mouse Y") * lookSensitivity;
-        rotationX = Mathf.Clamp(rotationX, -89f, 89f);
-
-        transform.rotation = Quaternion.Euler(rotationX, rotationY, 0f);
-    }
-
-    // ── WASD Hareketi ────────────────────────────────────────────────────
     void HandleMovement()
     {
-        float moveX = Input.GetAxis("Horizontal"); // A / D
-        float moveZ = Input.GetAxis("Vertical");   // W / S
+        float moveX = Input.GetAxisRaw("Horizontal");
+        float moveZ = Input.GetAxisRaw("Vertical");
 
-        // transform.right ve forward rotasyondan sonra güncellendi, doğru yönü gösterir
-        Vector3 move = transform.right * moveX + transform.forward * moveZ;
+        Vector3 forward = transform.forward;
+        forward.y = 0;
+        forward.Normalize();
 
-        if (move.magnitude > 1f) move.Normalize();
+        Vector3 right = transform.right;
+        right.y = 0;
+        right.Normalize();
 
-        transform.position += move * moveSpeed * Time.deltaTime;
+        Vector3 direction = (forward * moveZ + right * moveX).normalized;
+        transform.position += direction * moveSpeed * Time.deltaTime;
+        transform.position = new Vector3(transform.position.x, fixedYHeight, transform.position.z);
     }
 
-    // ── Mouse odaklı tarama ──────────────────────────────────────────────
+    void HandleRotation()
+    {
+        // Mouse hareket ettiği anda (sağ tık beklemeden) rotasyonu güncelle
+        rotationY += Input.GetAxis("Mouse X") * lookSensitivity;
+        rotationX -= Input.GetAxis("Mouse Y") * lookSensitivity;
+        rotationX = Mathf.Clamp(rotationX, -60f, 60f);
+
+        transform.rotation = Quaternion.Euler(rotationX, rotationY, 0);
+    }
+
     void PerformMenuScan()
     {
-        if (currentScan == null || cam == null) return;
-
-        // Ekran ortasından ışın gönder (mouse kilitli olduğu için merkez = bakış)
-        Ray centerRay = cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        if (currentScan == null) return;
 
         for (int i = 0; i < raysPerScan; i++)
         {
-            Vector3 spread = centerRay.direction + new Vector3(
-                Random.Range(-0.1f, 0.1f),
-                Random.Range(-0.1f, 0.1f),
-                0f);
+            // Mouse kilitli olduğu için artık ScreenPointToRay(Input.mousePosition) 
+            // otomatik olarak ekranın tam ortasından ışın gönderir.
+            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+
+            Vector3 spread = ray.direction + transform.TransformDirection(new Vector3(
+                Random.Range(-0.03f, 0.03f),
+                Random.Range(-0.03f, 0.03f),
+                0));
 
             RaycastHit hit;
-            if (!Physics.Raycast(centerRay.origin, spread, out hit, scanRange)) continue;
-
-            Color baseColor = Color.white;
-
-            if (hit.collider.CompareTag("MenuButton"))
+            if (Physics.Raycast(ray.origin, spread, out hit, scanRange))
             {
-                baseColor = buttonRevealColor;
-                hit.collider.GetComponentInParent<WorldButton>()?.OnScanned();
+                ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
+                emitParams.position = hit.point;
+                emitParams.startLifetime = 2f;
+
+                Color baseColor = Color.white;
+
+                if (hit.collider.CompareTag("MenuButton"))
+                {
+                    baseColor = buttonRevealColor;
+                    WorldButton wb = hit.collider.GetComponent<WorldButton>();
+                    if (wb != null) wb.OnScanned();
+                }
+                else if (hit.collider.CompareTag("RunePath") || hit.collider.CompareTag("Danger"))
+                {
+                    baseColor = pathColor;
+                }
+
+                float distanceRatio = hit.distance / scanRange;
+                Color finalColor = Color.Lerp(baseColor, Color.black, distanceRatio);
+                finalColor.a = particleAlpha;
+
+                emitParams.startColor = finalColor;
+                currentScan.Emit(emitParams, 1);
             }
-            else if (hit.collider.CompareTag("RunePath"))
-            {
-                baseColor = pathColor;
-            }
-
-            float distanceRatio = hit.distance / scanRange;
-            Color finalColor = Color.Lerp(baseColor, Color.black, distanceRatio);
-            finalColor.a = particleAlpha;
-
-            ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
-            emitParams.position = hit.point;
-            emitParams.startLifetime = 2f;
-            emitParams.startColor = finalColor;
-
-            currentScan.Emit(emitParams, 1);
         }
     }
 }
