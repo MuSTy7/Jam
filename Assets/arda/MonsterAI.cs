@@ -64,6 +64,7 @@ public class MonsterAI : MonoBehaviour
 
     bool IsPlayerLookingAtMonster()
     {
+
         Ray ray = new Ray(
             playerCamera.transform.position,
             playerCamera.transform.forward

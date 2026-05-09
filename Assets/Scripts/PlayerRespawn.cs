@@ -2,40 +2,31 @@ using UnityEngine;
 
 public class PlayerRespawn : MonoBehaviour
 {
-    [Header("Iþýnlanma Ayarlarý")]
-    public Transform spawnPoint; // Buraya Hierarchy'deki SpawnPoint objesini sürükle
+    [Header("Sahne Geçiþ Ayarlarý")]
+    public string mainMenuSceneName = "MainMenu"; // Geçilecek sahnenin tam adý
 
-    private CharacterController controller;
-
-    void Start()
-    {
-        controller = GetComponent<CharacterController>();
-    }
-
-    // Bu fonksiyon, "Is Trigger" iþaretli bir objeye girdiðinde çalýþýr
     private void OnTriggerEnter(Collider other)
     {
         // Eðer çarptýðýmýz objenin adý "KillZone" ise
         if (other.gameObject.name == "KillZone")
         {
-            Respawn();
+            GoToMainMenu();
         }
     }
 
-    public void Respawn()
+    public void GoToMainMenu()
     {
-        if (spawnPoint != null && controller != null)
+        // Daha önce oluþturduðumuz SceneFader sistemi varsa karartarak geç
+        if (SceneFader.instance != null)
         {
-            // ÝPUCU: CharacterController aktifken ýþýnlanma yapýlamaz. 
-            // Önce kapatýyoruz, ýþýnlýyoruz, sonra tekrar açýyoruz.
-            controller.enabled = false;
-
-            transform.position = spawnPoint.position;
-            transform.rotation = spawnPoint.rotation;
-
-            controller.enabled = true;
-
-            Debug.Log("Sistem Hatasý: Karakter baþlangýç noktasýna döndürüldü.");
+            SceneFader.instance.FadeToScene(mainMenuSceneName);
         }
+        else
+        {
+            // Eðer Fader yoksa (yedek plan) anýnda yükle
+            UnityEngine.SceneManagement.SceneManager.LoadScene(mainMenuSceneName);
+        }
+
+        Debug.Log("KillZone tetiklendi: Ana menüye dönülüyor.");
     }
 }
