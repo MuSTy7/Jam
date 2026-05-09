@@ -6,6 +6,10 @@ TagManager:
   tags:
   - Danger
   - Monster
+  - Rune1 Tag
+  - Rune2 Tag
+  - Rune3 Tag
+  - Rune4 Tag
   layers:
   - Default
   - TransparentFX
