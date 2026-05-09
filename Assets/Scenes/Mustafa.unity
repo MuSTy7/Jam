@@ -10964,6 +10964,8 @@ MonoBehaviour:
   particleAlpha: 0.4
   maxScanCount: 5
   raysPerFrame: 30
+  scanSound: {fileID: 8300000, guid: b97d8d5aad241d84faeae327ec9510b1, type: 3}
+  scanVolume: 1
   rune1Tag: Rune1 Tag
   rune2Tag: Rune2 Tag
   rune3Tag: Rune3 Tag

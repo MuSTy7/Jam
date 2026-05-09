@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Scanner : MonoBehaviour
 {
@@ -17,38 +16,74 @@ public class Scanner : MonoBehaviour
     public int maxScanCount = 5;
     public int raysPerFrame = 200;
 
-    // ─── Rün Renk Eşleşmeleri ───────────────────────────────────────────────
-    // Tag adlarını Inspector'dan değiştirebilirsiniz.
-    [Header("Rün Yolu Renkleri (Tag → Renk)")]
-    public string rune1Tag = "Rune1 Tag";   // 1. rüne giden yol → Mavi
-    public string rune2Tag = "Rune2 Tag";   // 2. rüne giden yol → Yeşil
-    public string rune3Tag = "Rune3 Tag";   // 3. rüne giden yol → Sarı
-    public string rune4Tag = "Rune4 Tag";
-    public string dangerTag = "Danger";  // Tehlikeli alan      → Kırmızı
+    [Header("Ses Ayarları")]
+    public AudioClip scanSound;           // Inspector'dan ses dosyasını sürükle
+    [Range(0f, 1f)]
+    public float scanVolume = 1f;
 
-    // Kanalların baz renkleri
-    private static readonly Color ColorRune1 = new Color(0.10f, 0.55f, 1.00f); // Mavi
-    private static readonly Color ColorRune2 = new Color(0.10f, 1.00f, 0.30f); // Yeşil
-    private static readonly Color ColorRune3 = new Color(1.00f, 0.90f, 0.10f); // Sarı
-    private static readonly Color ColorRune4 = new Color(1.00f, 0.71f, 0.76f); // Sarı
+    // ─── Rün Renk Eşleşmeleri ───────────────────────────────────────────────
+    [Header("Rün Yolu Renkleri (Tag → Renk)")]
+    public string rune1Tag = "Rune1 Tag";
+    public string rune2Tag = "Rune2 Tag";
+    public string rune3Tag = "Rune3 Tag";
+    public string rune4Tag = "Rune4 Tag";
+    public string dangerTag = "Danger";
+
+    private static readonly Color ColorRune1 = new Color(0.10f, 0.55f, 1.00f);
+    private static readonly Color ColorRune2 = new Color(0.10f, 1.00f, 0.30f);
+    private static readonly Color ColorRune3 = new Color(1.00f, 0.90f, 0.10f);
+    private static readonly Color ColorRune4 = new Color(1.00f, 0.71f, 0.76f);
     private static readonly Color ColorDanger = Color.red;
     private static readonly Color ColorDefault = Color.white;
-    // ────────────────────────────────────────────────────────────────────────
 
     private Queue<ParticleSystem> activeScans = new Queue<ParticleSystem>();
     private ParticleSystem currentScan;
+    private AudioSource audioSource;
+
+    void Start()
+    {
+        // AudioSource'u otomatik oluştur — Inspector'da ayrıca eklemeye gerek yok
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.spatialBlend = 0f;     // 2D ses
+        audioSource.loop = true;   // Basılı tutunca sürekli çalsın
+        audioSource.volume = scanVolume;
+    }
 
     void Update()
     {
+        // Sol tık basıldığı an: yeni tarama + sesi başlat
         if (Input.GetButtonDown("Fire1"))
         {
             StartNewScanSession();
+            StartScanSound();
         }
 
+        // Sol tık basılı tutulurken: taramaya devam et
         if (Input.GetButton("Fire1") && currentScan != null)
         {
             ContinueScanning();
         }
+
+        // Sol tık bırakılınca: sesi durdur
+        if (Input.GetButtonUp("Fire1"))
+        {
+            StopScanSound();
+        }
+    }
+
+    void StartScanSound()
+    {
+        if (scanSound == null || audioSource == null) return;
+        audioSource.clip = scanSound;
+        audioSource.volume = scanVolume;
+        audioSource.Play();
+    }
+
+    void StopScanSound()
+    {
+        if (audioSource != null && audioSource.isPlaying)
+            audioSource.Stop();
     }
 
     void StartNewScanSession()
@@ -74,18 +109,13 @@ public class Scanner : MonoBehaviour
             if (!Physics.Raycast(playerCamera.position, randomDirection, out hit, scanRange))
                 continue;
 
-            // Kendi karakterimizi taramayı atla
             if (hit.collider.CompareTag("Player")) continue;
 
-            // ── Tag'e göre baz rengi seç ──────────────────────────────────
             Color baseColor = GetColorByTag(hit.collider.tag);
-
-            // ── Derinliğe göre baz renkten siyaha lerp ────────────────────
             float distanceRatio = hit.distance / scanRange;
             Color finalColor = Color.Lerp(baseColor, Color.black, distanceRatio);
             finalColor.a = particleAlpha;
 
-            // ── Partikülü yayınla ──────────────────────────────────────────
             ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
             emitParams.position = hit.point;
             emitParams.startLifetime = Mathf.Infinity;
